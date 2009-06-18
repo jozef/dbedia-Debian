@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+dbedia-debian-dsc2json - convert information in .dsc files
+
+=head1 SYNOPSIS
+
+	dbedia-debian-dsc2json [--mirror-location $PATH1] [--dbedia-location $PATH2]
+
+=head1 DESCRIPTION
+
+=cut
+
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+use File::Find::Rule;
+use File::Slurp 'write_file', 'read_file';
+use JSON::XS;
+use Parse::Deb::Control;
+use File::Basename 'dirname';
+use File::Path 'mkpath';
+
+use FindBin '$Bin';
+
+exit main();
+
+sub main {
+	my $help;
+	my $mirror_location  = File::Spec->catdir($Bin, '..', 'tmp', 'Debian-mirror');
+	my $dbedia_location  = File::Spec->catdir($Bin, '..', 'tmp', 'dbedia');
+	GetOptions(
+		'help|h'            => \$help,
+		'mirror-location=s' => \$mirror_location,
+		'dbedia-location=s' => \$dbedia_location,
+	) or pod2usage;
+	pod2usage if $help;
+
+	my $json = JSON::XS->new->utf8->pretty(1);
+	my $dsclist_location = File::Spec->catfile($dbedia_location, 'dscList.json');
+	
+	# get list of dsc files
+	my @dsc_files = File::Find::Rule
+		->file()
+        ->name( '*.dsc' )
+		->in( $mirror_location )
+	;
+	
+	# loop through dsc files
+	my @dsc_list;
+	my %hash_list;
+	foreach my $dsc_filename (@dsc_files) {
+		my $json_filename = $dsc_filename;
+		$json_filename =~ s{^$mirror_location.(.+)dsc$}{$1json};
+		push @dsc_list, $json_filename;
+		
+		# get the raw content of dsc file
+		my $dsc = read_file($dsc_filename);
+		$dsc =~ s/^-----BEGIN PGP SIGNED MESSAGE-----\s+(Hash: \w+\n)?\n(.+)\n-----BEGIN PGP SIGNATURE-----.+$/$2/s;
+		
+		# parse dsc file
+		my $dsc_content = Parse::Deb::Control->new($dsc)->content();
+		die 'dsc "'.$dsc_filename.'" has unsupported format'
+			if @{$dsc_content} != 1;
+		$dsc_content = ${$dsc_content}[0];
+		
+		# trim and cleanup all values
+		foreach my $key (keys %{$dsc_content}) {
+			$dsc_content->{$key} =~ s/^\s+|\s+$//gxms;
+		}
+		
+		# extract files lists
+		foreach my $key (keys %{$dsc_content}) {
+			if (($key =~ m/^Checksums-(.+)$/) or ($key eq 'Files')) {
+				my $hash_alg = ($key eq 'Files' ? 'MD5' : $1);
+				my $value = $dsc_content->{$key};
+				my %files;
+				foreach my $file_value (split('\n', $value)) {
+					my ($hash, $size, $name) = split(/\s/, $file_value);
+					$files{$name} = {
+						'hash' => $hash,
+						'size' => $size,
+					};
+					$hash_list{$hash_alg}->{$hash} = {
+						'file_name' => $name,
+						'src'       => $json_filename,
+					};
+				}
+				$dsc_content->{$key} = \%files;
+			}
+		}
+		
+		# write json file	
+		$json_filename = File::Spec->catdir($dbedia_location, $json_filename);
+		my $json_dirname = $json_filename;
+		mkpath(dirname($json_filename))
+			if not -e $json_dirname;
+		write_file($json_filename, $json->encode($dsc_content));
+	}
+	
+	# write list of dsc files
+	write_file($dsclist_location, $json->encode(\@dsc_list));
+	
+	# write lists of hashes
+	foreach my $hash_alg (keys %hash_list) {
+		my $hash_filename = File::Spec->catfile($dbedia_location, 'fileHashes'.$hash_alg.'.json');
+		write_file($hash_filename, $json->encode($hash_list{$hash_alg}));
+	}
+	
+	return 0;
+}
