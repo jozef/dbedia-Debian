@@ -117,7 +117,7 @@ sub main {
 				my $version = (
 					$info->{'versions'}->{$package}
 					? $info->{'versions'}->{$package}->stringify
-					: 'undef'
+					: 0
 				);
 				
 				# add version info to the provides only if it's not already there (we are interrested in the oldest package that has that version)
