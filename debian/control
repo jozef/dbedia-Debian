@@ -1,0 +1,13 @@
+Source: dbedia-debian
+Section: web
+Priority: optional
+Maintainer: Jozef Kutej <jozef@kutej.net>
+Build-Depends: debhelper (>= 4.0.0), fakeroot
+Standards-Version: 3.6.1
+
+Package: dbedia-debian
+Architecture: all
+Depends: 
+Recommends: dbedia
+Description: Debian data in dbedia
+ static files

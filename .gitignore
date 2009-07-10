@@ -10,3 +10,8 @@
 /cover_db
 /tmp/*
 /dbedia-Debian-*
+/debian/dbedia-debian
+/debian/files
+/debian/dbedia-debian.debhelper.log
+/configure-stamp
+/build-stamp
