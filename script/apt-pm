@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+apt-pm - locate Perl Modules
+
+=head1 SYNOPSIS
+
+	apt-pm search Moose::Meta::Role
+	apt-pm update
+
+=head1 DESCRIPTION
+
+=cut
+
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+use dbedia::Debian;
+use List::MoreUtils 'none';
+
+exit main();
+
+sub main {
+	my $help;
+	my $dbedia_base_uri = 'http://dbedia.org/Debian/';
+	GetOptions(
+		'help|h'   => \$help,
+		'dbedia=s' => \$dbedia_base_uri,
+	) or pod2usage;
+	pod2usage if $help;
+	
+	my $cmd     = shift @ARGV;
+	my $package = shift @ARGV;
+	pod2usage if not $cmd;
+	pod2usage if none { $_ eq $cmd } qw(search find update);
+	
+	# get provides from dbedia.com
+	if ($cmd eq 'update') {
+		dbedia::Debian->perl_provides_update($dbedia_base_uri);
+	}
+
+	# lookup the package
+	if (($cmd eq 'search') or ($cmd eq 'find')) {
+		pod2usage if not $package;
+		
+		# get provides hash with packages
+		my %provides = %{dbedia::Debian->perl_provides};
+		
+		# nothing to do if the package is not there
+		return 0 if not exists $provides{$package};
+		
+		# print all available versions
+		foreach my $version (keys %{$provides{$package}}) {
+			my $entry = $provides{$package}->{$version};
+			my ($deb, $debversion) = dbedia::Debian->parse_filename($entry->{'file_name'});
+			print $deb, '/', $debversion, ': ', $entry->{'pm_file'}, ' ', $version, "\n";
+		}
+	}
+	
+	return 0;
+}
