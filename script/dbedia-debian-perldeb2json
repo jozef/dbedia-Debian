@@ -1,0 +1,171 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+dbedia-debian-perldeb2json - convert provides information in .deb packages
+
+=head1 SYNOPSIS
+
+	dbedia-debian-perldeb2json [--dbedia-location $PATH2]
+
+=head1 DESCRIPTION
+
+=cut
+
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+use File::Find::Rule;
+use File::Slurp 'write_file', 'read_file';
+use JSON::XS;
+use File::Basename 'dirname', 'basename';
+use File::Path 'mkpath';
+use YAML::XS 'Load';
+use File::is;
+use Parse::CPAN::Packages;
+use dbedia;
+use Module::Build::ModuleInfo;
+use File::Temp qw/ tempdir /;
+use List::MoreUtils 'any', 'none';
+
+use FindBin '$Bin';
+
+exit main();
+
+sub main {
+	my $help;
+	my $mirror_location = File::Spec->catdir($Bin, '..', 'tmp', 'Debian-mirror');
+	my $dbedia_location = File::Spec->catdir($Bin, '..', 'tmp', 'dbedia');
+	my $tmp_location    = File::Spec->catdir($Bin, '..', 'tmp');
+	GetOptions(
+		'help|h'            => \$help,
+		'mirror-location=s' => \$mirror_location,
+		'dbedia-location=s' => \$dbedia_location,
+	) or pod2usage;
+	pod2usage if $help;
+
+	my $json = JSON::XS->new->utf8->pretty(1)->convert_blessed(1);
+	my $dbedia = dbedia->new('base_uri' => 'http://dbedia.com/Debian/');
+	my $tmp_provides_filename = File::Spec->catfile($tmp_location, 'perlProvides.json');
+	my $provides_filename = File::Spec->catfile($dbedia_location, 'perlProvides.json');
+	my $processed_filename = File::Spec->catfile($tmp_location, 'perlProvidesDebProcessed.json');
+	
+	# get provides from dbedia.com
+	my %provides = eval { %{$dbedia->get('perlProvides.json')} };
+	# merge with local file
+	merge_provides(\%provides, $json->decode(scalar read_file($tmp_provides_filename)))
+		if -e $tmp_provides_filename;
+
+	# get list of already processed deb files
+	my %processed_deb_files = map { $_ => 1 } eval { @{$json->decode(scalar read_file($processed_filename))} };
+
+	# get list of deb files
+	my @deb_files =
+		grep { not exists $processed_deb_files{$_} } # skip if already processed
+		map { s{^$mirror_location.(.+)$}{$1}; $_; }  # remove the local mirror location from path
+		File::Find::Rule                             # find all .deb files in the debian mirror
+		->file()
+		->name( '*.deb' )
+		->in( $mirror_location )
+	;
+	
+	# sort them by mtime desc
+	@deb_files =
+		sort {
+			File::is->newer(
+				File::Spec->catfile($mirror_location, $a),
+				File::Spec->catfile($mirror_location, $b)
+			)
+		} @deb_files
+	;
+
+	foreach my $deb_file (@deb_files) {
+		$processed_deb_files{$deb_file} = 1;
+		
+		my $tmp_dir = tempdir();
+		
+		system(
+			'dpkg',
+			'-x',
+			File::Spec->catfile($mirror_location, $deb_file),
+			$tmp_dir,
+		);
+		
+		# get list of .pm files
+		my @deb_files = File::Find::Rule
+			->file()
+			->name( '*.pm' )
+			->in( $tmp_dir )
+		;
+				
+		foreach my $pm_file (@deb_files) {
+			# get module info
+			my $info = eval { Module::Build::ModuleInfo->new_from_file($pm_file) };
+			warn 'failed to get module info of "'.$pm_file.'" - "'.$@.'"' if $@;
+			next if not $info;
+			
+			print 'processing ', $pm_file, "\n";
+			foreach my $package (keys %{$info->{'versions'}}) {
+				next if $package eq 'main';
+				
+				# set version to undef 
+				my $version = (
+					$info->{'versions'}->{$package}
+					? $info->{'versions'}->{$package}->stringify
+					: 'undef'
+				);
+				
+				# add version info to the provides only if it's not already there (we are interrested in the oldest package that has that version)
+				$provides{$package}->{$version} = {
+					'file_name' => basename($deb_file),
+					'folder' => dirname($deb_file),
+				} if not exists $provides{$package}->{$version};
+			}
+		}
+		
+		system('rm', '-rf', $tmp_dir);
+		write_file($tmp_provides_filename, $json->encode(\%provides));
+		write_file($processed_filename, $json->encode([ keys %processed_deb_files ]));
+	}
+	
+	# cleanup and write processed_deb_files, keep only existing files
+	%processed_deb_files = map {(
+		-e File::Spec->catfile($mirror_location, $_)
+		? ($_ => 1)
+		: ()
+	)} keys %processed_deb_files;
+	write_file($processed_filename, $json->encode([ keys %processed_deb_files ]));
+	
+	# cleanup provides
+	foreach my $package (keys %provides) {
+		foreach my $version (keys %{$provides{$package}}) {
+			my $filename = $provides{$package}->{$version}->{'file_name'};
+			my $folder   = $provides{$package}->{$version}->{'folder'};
+			delete $provides{$package}->{$version}
+				if not exists $processed_deb_files{File::Spec->catfile($folder, $filename)};
+		}
+		
+		delete $provides{$package}
+			if (not keys %{$provides{$package}});
+	}
+	write_file($tmp_provides_filename, $json->encode(\%provides));
+	write_file($provides_filename, $json->encode(\%provides));
+	
+	return 0;
+}
+
+sub merge_provides {
+	my $provides1 = shift;
+	my $provides2 = shift;
+	
+	foreach my $package (keys %{$provides2}) {
+		foreach my $version (keys %{$provides2->{$package}}) {
+			$provides1->{$package}->{$version} = $provides2->{$package}->{$version};
+		}
+	}
+	
+	return $provides1;
+}
