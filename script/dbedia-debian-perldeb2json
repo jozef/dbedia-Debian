@@ -95,19 +95,21 @@ sub main {
 		);
 		
 		# get list of .pm files
-		my @deb_files = File::Find::Rule
+		my @pm_files = File::Find::Rule
 			->file()
 			->name( '*.pm' )
 			->in( $tmp_dir )
 		;
 				
-		foreach my $pm_file (@deb_files) {
+		foreach my $pm_file (@pm_files) {
 			# get module info
 			my $info = eval { Module::Build::ModuleInfo->new_from_file($pm_file) };
 			warn 'failed to get module info of "'.$pm_file.'" - "'.$@.'"' if $@;
 			next if not $info;
 			
 			print 'processing ', $pm_file, "\n";
+			
+			$pm_file =~ s{^$tmp_dir.(.+)$}{$1};
 			foreach my $package (keys %{$info->{'versions'}}) {
 				next if $package eq 'main';
 				
@@ -122,6 +124,7 @@ sub main {
 				$provides{$package}->{$version} = {
 					'file_name' => basename($deb_file),
 					'folder' => dirname($deb_file),
+					'pm_file' => File::Spec->rootdir().$pm_file,
 				} if not exists $provides{$package}->{$version};
 			}
 		}
