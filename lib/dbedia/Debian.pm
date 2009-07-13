@@ -150,6 +150,46 @@ sub perl_provides_update {
     return;
 }
 
+
+=head2 find_perl_module_package($module_name, $min_version)
+
+For given C<$module_name> and C<$min_version> required looks up a Debian
+package. Returns Debian package name in scalar context and name + version
+in array context.
+
+NOTE: the hash with perl_provides will be loaded and cached first time used
+and the memory will not be released until program ends.
+
+=cut
+
+my %provides_cache;
+sub find_perl_module_package {
+    my $self    = shift;
+    my $module  = shift;
+    my $version = shift || 0;
+    
+    %provides_cache = %{dbedia::Debian->perl_provides}
+        if not %provides_cache;
+    
+    return if not exists $provides_cache{$module};
+    
+    # sort available versions and grep smaller than requested
+    my @versions =
+        sort { CPAN::Version->vcmp($a, $b) }
+        grep { not CPAN::Version->vlt($_, $version) }
+        keys %{$provides_cache{$module}}
+    ;
+    
+    return if not @versions;
+    
+    my $debianized_version = $versions[0];
+    my ($deb_package_name, $deb_package_version) =
+        dbedia::Debian->parse_filename($provides_cache{$module}->{$debianized_version}->{'file_name'});
+    return ($deb_package_name, $deb_package_version)
+        if wantarray();
+    return $deb_package_name;
+}
+
 1;
 
 

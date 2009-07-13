@@ -1,0 +1,47 @@
+diff -Naur dh-make-perl-0.56.orig/lib/Debian/AptContents.pm dh-make-perl-0.56/lib/Debian/AptContents.pm
+--- dh-make-perl-0.56.orig/lib/Debian/AptContents.pm	2009-05-19 08:23:25.000000000 +0200
++++ dh-make-perl-0.56/lib/Debian/AptContents.pm	2009-07-13 21:48:41.000000000 +0200
+@@ -35,6 +35,7 @@
+ use IO::Uncompress::Gunzip;
+ use Module::CoreList ();
+ use Storable;
++use dbedia::Debian;
+ 
+ =head1 CONSTRUCTOR
+ 
+@@ -399,33 +400,8 @@
+ =cut
+ 
+ sub find_perl_module_package {
+-    my ( $self, $module, $version ) = @_;
+-
+-    my $core_ver = Module::CoreList->first_release( $module, $version );
+-
+-    if($core_ver) {
+-        $core_ver = version->new($core_ver);            # v5.9.2
+-        ( $core_ver = $core_ver->normal ) =~ s/^v//;    # "5.9.2"
+-
+-        return Debian::Dependency->new( 'perl-modules', $core_ver );
+-    }
+-
+-    my $module_file = $module;
+-    $module_file =~ s|::|/|g;
+-
+-    my @matches = $self->find_file_packages("$module_file.pm");
+-
+-    # rank non -perl packages lower
+-    @matches = sort {
+-        if    ( $a !~ /-perl: / ) { return 1; }
+-        elsif ( $b !~ /-perl: / ) { return -1; }
+-        else                      { return $a cmp $b; }    # or 0?
+-    } @matches;
+-
+-    return Debian::Dependency->new( $matches[0], $version )
+-        if @matches;
+-
+-    return;
++    my ( $self, $module, $version ) = @_;    
++    return Debian::Dependency->new(dbedia::Debian->find_perl_module_package($module, $version));
+ }
+ 
+ 1;
