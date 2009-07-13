@@ -1,3 +1,9 @@
+dbedia-debian (0.02-1) unstable; urgency=low
+
+  * added perlProvides 
+
+ -- Jozef Kutej <jozef@kutej.net>  Sat, 11 Jul 2009 15:10:57 +0200
+
 dbedia-debian (0.01-2) unstable; urgency=low
 
   * update
