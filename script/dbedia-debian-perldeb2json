@@ -54,7 +54,7 @@ sub main {
 	my $processed_filename = File::Spec->catfile($tmp_location, 'perlProvidesDebProcessed.json');
 	
 	# get provides from dbedia.com
-	my %provides = eval { %{$dbedia->get('perlProvides.json')} };
+	my %provides = eval { %{$dbedia->get('perlProvides.json.gz')} };
 	# merge with local file
 	merge_provides(\%provides, $json->decode(scalar read_file($tmp_provides_filename)))
 		if -e $tmp_provides_filename;

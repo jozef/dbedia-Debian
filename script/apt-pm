@@ -11,6 +11,8 @@ apt-pm - locate Perl Modules
 
 =head1 DESCRIPTION
 
+Lookup Perl package in Debian .deb files.
+
 =cut
 
 
@@ -26,7 +28,7 @@ exit main();
 
 sub main {
 	my $help;
-	my $dbedia_base_uri = 'http://dbedia.org/Debian/';
+	my $dbedia_base_uri = 'http://dbedia.com/Debian/';
 	GetOptions(
 		'help|h'   => \$help,
 		'dbedia=s' => \$dbedia_base_uri,

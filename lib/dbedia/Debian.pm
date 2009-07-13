@@ -2,7 +2,7 @@ package dbedia::Debian;
 
 =head1 NAME
 
-dbedia::Debian - helper functions to use http://dbedia.org/Debian/
+dbedia::Debian - helper functions to use L<http://dbedia.org/Debian/>
 
 =head1 SYNOPSIS
 
@@ -10,6 +10,8 @@ dbedia::Debian - helper functions to use http://dbedia.org/Debian/
     my %provides = %{dbedia::Debian->perl_provides};
 
 =head1 DESCRIPTION
+
+An experiment.
 
 =cut
 
@@ -29,6 +31,8 @@ our $PERL_PROVIDES_BASENAME = 'perlProvides.json.gz';
 use base 'Class::Accessor::Fast';
 
 =head1 PROPERTIES
+
+none so far
 
 =cut
 
@@ -50,9 +54,24 @@ sub new {
     return $self;
 }
 
+
+=head2 PERL_PROVIDES_FILENAME()
+
+returns path to the apt-pm cache file.
+
+=cut
+
 sub PERL_PROVIDES_FILENAME {
     return '/var/cache/apt/apt-pm/'.$PERL_PROVIDES_BASENAME;
 }
+
+
+=head2 parse_filename($filename)
+
+Parses .deb filename an returns
+C<($deb_package_name, $deb_package_version, $deb_package_architecture)>.
+
+=cut
 
 sub parse_filename {
     my $self     = shift;
@@ -63,6 +82,38 @@ sub parse_filename {
     
     return $1, $2, $3;
 }
+
+
+=head2 perl_provides()
+
+Returns hash reference with Perl packages as keys and the location
+as values:
+
+   "Moose::Util" => {
+      "0.87" => {
+         "pm_file" => "/usr/share/perl5/Moose/Util.pm",
+         "file_name" => "libmoose-perl_0.87-1_all.deb",
+         "folder" => "pool/main/libm/libmoose-perl"
+      },
+      "0.54" => {
+         "pm_file" => "/usr/share/perl5/Moose/Util.pm",
+         "file_name" => "libmoose-perl_0.54-1_all.deb",
+         "folder" => "pool/main/libm/libmoose-perl"
+      },
+      "0.86" => {
+         "pm_file" => "/usr/share/perl5/Moose/Util.pm",
+         "file_name" => "libmoose-perl_0.86-1_all.deb",
+         "folder" => "pool/main/libm/libmoose-perl"
+      },
+      "0.80" => {
+         "pm_file" => "/usr/share/perl5/Moose/Util.pm",
+         "file_name" => "libmoose-perl_0.80-1_all.deb",
+         "folder" => "pool/main/libm/libmoose-perl"
+      }
+   },
+   ...
+
+=cut
 
 sub perl_provides {
     my $self = shift;
@@ -77,6 +128,13 @@ sub perl_provides {
     
     return \%provides;
 }
+
+
+=head2 perl_provides_update()
+
+Refresh PERL_PROVIDES_FILENAME() from L<http://dbedia.com/Debian/>
+
+=cut
 
 sub perl_provides_update {
     my $self            = shift;
