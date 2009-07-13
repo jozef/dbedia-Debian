@@ -22,7 +22,6 @@ use LWP::Simple 'mirror', 'is_error';
 use File::Basename 'dirname';
 use IO::Uncompress::Gunzip 'gunzip', '$GunzipError';
 use JSON::XS;
-use dbedia::Debian;
 
 our $VERSION = '0.01';
 our $DBEDIA_BASE_URI = 'http://dbedia.org/Debian/';

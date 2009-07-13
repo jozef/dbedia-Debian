@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 use Module::Build;
-use 5.010;
 
 my $builder = Module::Build->new(
     module_name         => 'dbedia-Debian',
