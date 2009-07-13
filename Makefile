@@ -10,7 +10,7 @@ all: update
 update:
 	touch ${MIRROR}/update-heartbeat
 	if [ ${MIRROR}/update-heartbeat -nt ${MIRROR}/update-next ]; then \
-		rsync -avm --del --include="*.dsc" --include='*/' --exclude='*' rsync://ftp.at.debian.org/debian/ ${MIRROR}/; \
+		rsync -avm --del --exclude-from=exclude.txt --include="*.deb" --include="*.dsc" --include='*/' --exclude='*' rsync://ftp.at.debian.org/debian/ ${MIRROR}/; \
 		rm -rf ${WWW_FOLDER}/*; \
 		script/dbedia-debian-dsc2json; \
 		script/dbedia-debian-perldeb2json; \
