@@ -1,4 +1,4 @@
-dbedia-debian (0.02-1) unstable; urgency=low
+dbedia-debian (0.02-2) unstable; urgency=low
 
   * added perlProvides 
 

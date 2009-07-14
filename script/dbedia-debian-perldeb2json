@@ -51,7 +51,8 @@ sub main {
 	my $dbedia = dbedia->new('base_uri' => 'http://dbedia.com/Debian/');
 	my $tmp_provides_filename = File::Spec->catfile($tmp_location, 'perlProvides.json');
 	my $provides_filename = File::Spec->catfile($dbedia_location, 'perlProvides.json');
-	my $processed_filename = File::Spec->catfile($tmp_location, 'perlProvidesDebProcessed.json');
+	my $tmp_processed_filename = File::Spec->catfile($tmp_location, 'perlProvidesDebProcessed.json');
+	my $processed_filename = File::Spec->catfile($dbedia_location, 'perlProvidesDebProcessed.json');
 	
 	# get provides from dbedia.com
 	my %provides = eval { %{$dbedia->get('perlProvides.json.gz')} };
@@ -60,7 +61,13 @@ sub main {
 		if -e $tmp_provides_filename;
 
 	# get list of already processed deb files
-	my %processed_deb_files = map { $_ => 1 } eval { @{$json->decode(scalar read_file($processed_filename))} };
+	my %processed_deb_files =
+		map { $_ => 1 }
+		(
+			eval {@{$dbedia->get('perlProvidesDebProcessed.json.gz')}},
+			eval {@{$json->decode(scalar read_file($tmp_processed_filename))}},
+		)
+	;
 
 	# get list of deb files
 	my @deb_files =
@@ -131,7 +138,7 @@ sub main {
 		
 		system('rm', '-rf', $tmp_dir);
 		write_file($tmp_provides_filename, $json->encode(\%provides));
-		write_file($processed_filename, $json->encode([ keys %processed_deb_files ]));
+		write_file($tmp_processed_filename, $json->encode([ keys %processed_deb_files ]));
 	}
 	
 	# cleanup and write processed_deb_files, keep only existing files
@@ -140,6 +147,7 @@ sub main {
 		? ($_ => 1)
 		: ()
 	)} keys %processed_deb_files;
+	write_file($tmp_processed_filename, $json->encode([ keys %processed_deb_files ]));
 	write_file($processed_filename, $json->encode([ keys %processed_deb_files ]));
 	
 	# cleanup provides
