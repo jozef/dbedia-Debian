@@ -122,7 +122,7 @@ sub main {
 				
 				# add version info to the provides only if it's not already there (we are interrested in the oldest package that has that version)
 				$provides{$package}->{$version} = {
-					'file_name' => basename($deb_file),
+					'filename' => basename($deb_file),
 					'folder' => dirname($deb_file),
 					'pm_file' => File::Spec->rootdir().$pm_file,
 				} if not exists $provides{$package}->{$version};
@@ -145,7 +145,7 @@ sub main {
 	# cleanup provides
 	foreach my $package (keys %provides) {
 		foreach my $version (keys %{$provides{$package}}) {
-			my $filename = $provides{$package}->{$version}->{'file_name'};
+			my $filename = $provides{$package}->{$version}->{'filename'};
 			my $folder   = $provides{$package}->{$version}->{'folder'};
 			delete $provides{$package}->{$version}
 				if not exists $processed_deb_files{File::Spec->catfile($folder, $filename)};

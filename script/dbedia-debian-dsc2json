@@ -86,7 +86,7 @@ sub main {
 						'size' => $size,
 					};
 					$hash_list{$hash_alg}->{$hash} = {
-						'file_name' => $name,
+						'filename' => $name,
 						'src'       => $json_filename,
 					};
 				}

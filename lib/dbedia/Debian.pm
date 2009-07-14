@@ -91,22 +91,22 @@ as values:
    "Moose::Util" => {
       "0.87" => {
          "pm_file" => "/usr/share/perl5/Moose/Util.pm",
-         "file_name" => "libmoose-perl_0.87-1_all.deb",
+         "filename" => "libmoose-perl_0.87-1_all.deb",
          "folder" => "pool/main/libm/libmoose-perl"
       },
       "0.54" => {
          "pm_file" => "/usr/share/perl5/Moose/Util.pm",
-         "file_name" => "libmoose-perl_0.54-1_all.deb",
+         "filename" => "libmoose-perl_0.54-1_all.deb",
          "folder" => "pool/main/libm/libmoose-perl"
       },
       "0.86" => {
          "pm_file" => "/usr/share/perl5/Moose/Util.pm",
-         "file_name" => "libmoose-perl_0.86-1_all.deb",
+         "filename" => "libmoose-perl_0.86-1_all.deb",
          "folder" => "pool/main/libm/libmoose-perl"
       },
       "0.80" => {
          "pm_file" => "/usr/share/perl5/Moose/Util.pm",
-         "file_name" => "libmoose-perl_0.80-1_all.deb",
+         "filename" => "libmoose-perl_0.80-1_all.deb",
          "folder" => "pool/main/libm/libmoose-perl"
       }
    },
@@ -184,7 +184,7 @@ sub find_perl_module_package {
     
     my $debianized_version = $versions[0];
     my ($deb_package_name, $deb_package_version) =
-        dbedia::Debian->parse_filename($provides_cache{$module}->{$debianized_version}->{'file_name'});
+        dbedia::Debian->parse_filename($provides_cache{$module}->{$debianized_version}->{'filename'});
     return ($deb_package_name, $deb_package_version)
         if wantarray();
     return $deb_package_name;

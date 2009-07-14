@@ -58,7 +58,7 @@ sub main {
 		# print all available versions
 		foreach my $version (keys %{$provides{$package}}) {
 			my $entry = $provides{$package}->{$version};
-			my ($deb, $debversion) = dbedia::Debian->parse_filename($entry->{'file_name'});
+			my ($deb, $debversion) = dbedia::Debian->parse_filename($entry->{'filename'});
 			print $deb, '/', $debversion, ': ', $entry->{'pm_file'}, ' ', $version, "\n";
 		}
 	}
