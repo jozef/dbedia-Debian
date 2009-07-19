@@ -17,6 +17,9 @@ my $builder = Module::Build->new(
         'File::Basename'   => 0,
         'IO::Uncompress::Gunzip'
                            => 0,
+        'List::MoreUtils'  => 0,
+        'Getopt::Long'     => 0,
+        'Pod::Usage'       => 0,
     },
     build_requires => {
         'Test::More'      => 0,

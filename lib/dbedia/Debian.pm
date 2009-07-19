@@ -23,7 +23,7 @@ use File::Basename 'dirname';
 use IO::Uncompress::Gunzip 'gunzip', '$GunzipError';
 use JSON::XS;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 our $DBEDIA_BASE_URI = 'http://dbedia.org/Debian/';
 our $PERL_PROVIDES_BASENAME = 'perlProvides.json.gz';
 

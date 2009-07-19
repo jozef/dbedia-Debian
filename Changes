@@ -1,5 +1,9 @@
 Revision history for dbedia-Debian
 
+0.02    19 Jul 2009
+    * missing dependencies
+    * examples/CPAN.pm.patch added
+
 0.01    19 Jul 2009
         First version, released on an unsuspecting world.
 
