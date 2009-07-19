@@ -1,0 +1,25 @@
+--- orig/CPAN.pm	2009-07-19 22:24:00.000000000 +0200
++++ new/CPAN.pm	2009-07-19 22:41:46.000000000 +0200
+@@ -30,6 +30,8 @@
+ use Text::ParseWords ();
+ use Text::Wrap ();
+ 
++use dbedia::Debian;
++
+ sub find_perl ();
+ 
+ # we need to run chdir all over and we would get at wrong libraries
+@@ -8176,6 +8178,13 @@
+     my(@need);
+     my @merged = %merged;
+     CPAN->debug("all merged_prereqs[@merged]") if $CPAN::DEBUG;
++    my @debs;
++    while (my($need_module, $need_version) = each %merged) {
++        my $deb = dbedia::Debian->find_perl_module_package($need_module, $need_version);
++        push @debs, $deb
++            if ($deb);
++    }
++    system('apt-get', 'install', @debs);
+   NEED: while (my($need_module, $need_version) = each %merged) {
+         my($available_version,$available_file,$nmo);
+         if ($need_module eq "perl") {
