@@ -1,7 +1,10 @@
 Build.PL
 Changes
+examples/dh-make-perl.patch
 lib/dbedia/Debian.pm
 MANIFEST
+META.yml
+README
 script/apt-pm
 script/dbedia-debian-dsc2json
 script/dbedia-debian-perldeb2json
@@ -11,5 +14,3 @@ t/fixme.t
 t/pod-coverage.t
 t/pod-spell.t
 t/pod.t
-README
-META.yml

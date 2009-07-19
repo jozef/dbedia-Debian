@@ -33,6 +33,7 @@
 ^configure-stamp$
 ^debian/
 ^etc/
+^exclude.txt$
 
 ^tmp/
 .*\.tar\.gz
